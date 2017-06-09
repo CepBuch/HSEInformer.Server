@@ -24,16 +24,28 @@ namespace HSEInformer.Server.Models
                         Surname = "Авакян",
                         Patronymic = "Амаякович",
                         Password = "123"
-                    },
-                      new User
-                      {
-                          Login = "sabuchko@edu.hse.ru",
-                          Name = "Бучко",
-                          Surname = "Сергей",
-                          Patronymic = "Александрович",
-                          Password = "qwe"
-                      }
+                    }
                 );
+                context.SaveChanges();
+            }
+
+            if (!context.HseMembers.Any())
+            {
+                context.HseMembers.AddRange(
+                    new HSEMember
+                    {
+                        Email = "sabuchko@edu.hse.ru",
+                        Name = "Сергей",
+                        Surname = "Бучко",
+                        Patronymic = "Алексанлрович"
+                    },
+                    new HSEMember
+                    {
+                        Email = "emttukhova@edu.hse.ru",
+                        Name = "Елена",
+                        Surname = "Тюхова",
+                        Patronymic = "Михайловна"
+                });
                 context.SaveChanges();
             }
 

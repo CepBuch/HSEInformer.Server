@@ -16,5 +16,7 @@ namespace HSEInformer.Server.Models
         public DbSet<HSEInformer.Server.Models.User> Users { get; set; }
 
         public DbSet<HSEInformer.Server.Models.Confirmation> Confirmations { get; set; }
+
+        public DbSet<HSEInformer.Server.Models.HSEMember> HseMembers { get; set; }
     }
 }

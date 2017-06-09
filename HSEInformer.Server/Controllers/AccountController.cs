@@ -12,11 +12,11 @@ using Newtonsoft.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using HSEInformer.Server.Interfaces;
+using HSEInformer.Server.ViewModels;
 
 namespace HSEInformer.Server.Controllers
 {
-    //[Produces("application/json")]
-    [Route("api/Account")]
+    [Produces("application/json")]
     public class AccountController : Controller
     {
         private readonly HSEInformerServerContext _context;
@@ -26,17 +26,45 @@ namespace HSEInformer.Server.Controllers
             _context = context;
         }
 
-        // GET: сheckUser?email=sabuchko@edu.hse.ru
+        /// <summary>
+        /// Метод, проверяющий, зарегистрирован ли уже пользователь в системе HSEInformer.
+        /// /checkAccountIsRegistred?email=sabuchko@edu.hse.ru
+        /// </summary>
+        /// <param name="email">Email пользовтеля</param>
+        /// <returns>true - зарегистрирован, false - не зарегистрирован</returns>
         [AllowAnonymous]
-        [HttpGet("/checkUser")]
-        public async Task<IActionResult> CheckUser([FromQuery]string email)
+        [HttpGet("/checkAccountIsRegistred")]
+        public IActionResult CheckAccountIsRegistred(string email)
         {
             if (!(email.EndsWith("edu.hse.ru") || email.EndsWith("hse.ru")))
             {
-                return BadRequest("Email should be ended with edu.hse.ru or hse.ru");
+                return Json(new { Ok = false, Message = "Email should be ended with edu.hse.ru or hse.ru" });
             }
 
-            var member = FindHseMember(email);
+            var member = _context.Users.FirstOrDefault(m => m.Login.ToLower() == email.ToLower().Trim());
+
+            var memberExists = member != null;
+            return Json(new { Ok = true, exists = memberExists });
+        }
+
+
+        // GET: /checkUserIsHseMember?email=sabuchko@edu.hse.ru
+        /// <summary>
+        /// Метод, проверяющий, есть ли в базе данных ВШЭ студент/сотрудник с данным адресом электронной почты.
+        /// Если есть, то данному студенту/сотруднику отправляется сообщение с 6-значным кодом подтверждения регистрации
+        /// </summary>
+        /// <param name="email">Email пользовтеля</param>
+        /// <returns>true - есть, false - нет</returns>
+        [AllowAnonymous]
+        [HttpGet("/checkUserIsHseMember")]
+        public async Task<IActionResult> CheckUserIsHseMember([FromQuery]string email)
+        {
+            if (!(email.EndsWith("edu.hse.ru") || email.EndsWith("hse.ru")))
+            {
+                return Json(new { Ok = false, Message = "Email should be ended with edu.hse.ru or hse.ru" });
+            }
+
+            var member = _context.HseMembers.FirstOrDefault(m => m.Email.ToLower() == email.ToLower().Trim());
             var memberExists = member != null;
             if (memberExists)
             {
@@ -54,7 +82,7 @@ namespace HSEInformer.Server.Controllers
                     }
                     else
                     {
-                        return BadRequest("Email cannoot be sent to a server");
+                        return Json(new { Ok = false, Message = "Confirmation email cannoot be sent from a server" });
                     }
 
                 }
@@ -62,16 +90,13 @@ namespace HSEInformer.Server.Controllers
             return Json(new { exists = memberExists });
         }
 
-        private User FindHseMember(string email)
-        {
-            return _context.Users.FirstOrDefault(m => m.Login.ToLower() == email.ToLower().Trim());
-        }
 
-        private void AddConfirmation(User user, string code)
+
+        private void AddConfirmation(HSEMember member, string code)
         {
             //Получал ли данный пользователь уже код подтверждения
             var foundUser = _context.Confirmations
-                .FirstOrDefault(m => m.User != null && m.User.Login.ToLower() == user.Login.Trim().ToLower());
+                .FirstOrDefault(m => m.Member != null && m.Member.Email.ToLower() == member.Email.Trim().ToLower());
 
             //Если получал, то обновляем его код новым. Если нет, то записываем в бд ждущих код
             if (foundUser != null)
@@ -80,24 +105,20 @@ namespace HSEInformer.Server.Controllers
             }
             else
             {
-                _context.Confirmations.Add(new Confirmation { User = user, Code = code });
+                _context.Confirmations.Add(new Confirmation { Member = member, Code = code });
 
             }
             _context.SaveChanges();
         }
 
-
-        public class ConfirmationInfo
-        {
-            public string Email { get; set; }
-
-            public string Code { get; set; }
-        }
-
-
+        /// <summary>
+        /// Метод подтверждения кода, отправленного на почту сотруднику/студенту ВШЭ
+        /// </summary>
+        /// <param name="confirmation">объект confirmation: string Email, string Code</param>
+        /// <returns>Если код введен верно, возвращает данные студента/сотрудника для дальнейшей регистрации</returns>
         [AllowAnonymous]
         [HttpPost("/ConfirmEmail")]
-        public IActionResult ConfirmEmail([FromBody]ConfirmationInfo confirmation)
+        public IActionResult ConfirmEmail([FromBody]ConfirmationViewModel confirmation)
         {
             var user = GetUserByCode(confirmation.Email, confirmation.Code);
 
@@ -111,14 +132,14 @@ namespace HSEInformer.Server.Controllers
             }
         }
 
-        private User GetUserByCode(string email, string code)
+        private HSEMember GetUserByCode(string email, string code)
         {
-            var confirmation = _context.Confirmations.Include(c => c.User)
-                .FirstOrDefault(e => e.User.Login.ToLower() == email.ToLower().Trim());
+            var confirmation = _context.Confirmations.Include(c => c.Member)
+                .FirstOrDefault(e => e.Member.Email.ToLower() == email.ToLower().Trim());
 
             if (confirmation != null && confirmation.Code.ToLower() == code.Trim().ToLower())
             {
-                return confirmation.User;
+                return confirmation.Member;
             }
             else
             {
@@ -126,8 +147,66 @@ namespace HSEInformer.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Регистрация нового пользователя. 
+        /// </summary>
+        /// <param name="model">
+        /// Код подтверждения, логин, пароль, подтверждения пароля и ФИО.
+        /// </param>
+        /// <returns>
+        /// Успешно ли прошла авторизация, или нет
+        /// </returns>
         [AllowAnonymous]
-        [HttpPost("/token")]
+        [HttpPost("/ConfirmEmail")]
+        public IActionResult Register(RegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                User user = new User
+                {
+                    Login = model.Email,
+                    Name = model.Name,
+                    Surname = model.Surname,
+                    Patronymic = model.Patronymic,
+                    Password = model.Password
+                };
+
+                var addStatus = AddUser(user);
+
+                if (addStatus)
+                    return Json(new { Ok = false, Message = "Success" });
+                else
+                    return Json(new { Ok = false, Message = "The user already exists" });
+            }
+            return Json(new { Ok = false, Message = "Invalid registration form" });
+        }
+
+        private bool AddUser(User user)
+        {
+            if (!_context.Users.Any(u => u.Login.ToLower() == user.Login.ToLower()))
+                return false;
+            else
+            {
+                _context.Users.Add(user);
+                return true;
+            }
+
+        }
+
+
+
+
+
+
+
+        /// <summary>
+        /// Метод получения токена авторизации в приложении. Токен действует 10000 минут.
+        /// Принимает в себя логин и пароль в формате MD5, возвращает временный токен.
+        /// Доступ ко всем запросам в приложении, помеченными [Authorized] доступен только с этим токеном.
+        /// </summary>
+        /// <returns></returns>
+        [AllowAnonymous]
+        [HttpPost("/login")]
         public async Task Token()
         {
             var username = Request.Form["username"];
@@ -183,7 +262,7 @@ namespace HSEInformer.Server.Controllers
         }
 
 
-        
+
 
     }
 }

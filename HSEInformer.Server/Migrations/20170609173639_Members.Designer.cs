@@ -8,9 +8,10 @@ using HSEInformer.Server.Models;
 namespace HSEInformer.Server.Migrations
 {
     [DbContext(typeof(HSEInformerServerContext))]
-    partial class HSEInformerServerContextModelSnapshot : ModelSnapshot
+    [Migration("20170609173639_Members")]
+    partial class Members
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.1.1")
