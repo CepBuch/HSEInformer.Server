@@ -41,14 +41,14 @@ namespace HSEInformer.Server.Controllers
                 return Json(new { Ok = false, Message = "Email should be ended with edu.hse.ru or hse.ru" });
             }
 
-            var member = _context.Users.FirstOrDefault(m => m.Login.ToLower() == email.ToLower().Trim());
+            var user = _context.Users.FirstOrDefault(m => m.Login.ToLower() == email.ToLower().Trim());
 
-            var memberExists = member != null;
+            var memberExists = user != null;
             return Json(new { Ok = true, exists = memberExists });
         }
 
 
-        // GET: /checkUserIsHseMember?email=sabuchko@edu.hse.ru
+        // GET: /sendConfirmationCode?email=sabuchko@edu.hse.ru
         /// <summary>
         /// Метод, проверяющий, есть ли в базе данных ВШЭ студент/сотрудник с данным адресом электронной почты.
         /// Если есть, то данному студенту/сотруднику отправляется сообщение с 6-значным кодом подтверждения регистрации
@@ -56,7 +56,7 @@ namespace HSEInformer.Server.Controllers
         /// <param name="email">Email пользовтеля</param>
         /// <returns>true - есть, false - нет</returns>
         [AllowAnonymous]
-        [HttpGet("/checkUserIsHseMember")]
+        [HttpGet("/sendConfirmationCode")]
         public async Task<IActionResult> CheckUserIsHseMember([FromQuery]string email)
         {
             if (!(email.EndsWith("edu.hse.ru") || email.EndsWith("hse.ru")))
@@ -64,30 +64,36 @@ namespace HSEInformer.Server.Controllers
                 return Json(new { Ok = false, Message = "Email should be ended with edu.hse.ru or hse.ru" });
             }
 
-            var member = _context.HseMembers.FirstOrDefault(m => m.Email.ToLower() == email.ToLower().Trim());
-            var memberExists = member != null;
-            if (memberExists)
+            var user = _context.Users.Any(m => m.Login.ToLower() == email.ToLower().Trim());
+
+            bool memberExists = false;
+            if (!user)
             {
-                IConfirmationCodeGenerator generator = new CodeGenerator();
-                var code = generator.Generate();
-
-                if (!string.IsNullOrWhiteSpace(code))
+                var member = _context.HseMembers.FirstOrDefault(m => m.Email.ToLower() == email.ToLower().Trim());
+                memberExists = member != null;
+                if (memberExists)
                 {
-                    IEmailManager manager = new EmailManager();
-                    var sendMailStatus = await manager.SendConfirmationEmailAsync(email, code);
+                    IConfirmationCodeGenerator generator = new CodeGenerator();
+                    var code = generator.Generate();
 
-                    if (sendMailStatus)
+                    if (!string.IsNullOrWhiteSpace(code))
                     {
-                        AddConfirmation(member, code);
-                    }
-                    else
-                    {
-                        return Json(new { Ok = false, Message = "Confirmation email cannoot be sent from a server" });
-                    }
+                        IEmailManager manager = new EmailManager();
+                        var sendMailStatus = await manager.SendConfirmationEmailAsync(email, code);
 
+                        if (sendMailStatus)
+                        {
+                            AddConfirmation(member, code);
+                        }
+                        else
+                        {
+                            return Json(new { Ok = false, Message = "Confirmation email cannoot be sent from a server" });
+                        }
+
+                    }
                 }
             }
-            return Json(new { exists = memberExists });
+            return Json(new { Ok = true, exists = memberExists });
         }
 
 
@@ -117,11 +123,10 @@ namespace HSEInformer.Server.Controllers
         /// <param name="confirmation">объект confirmation: string Email, string Code</param>
         /// <returns>Если код введен верно, возвращает данные студента/сотрудника для дальнейшей регистрации</returns>
         [AllowAnonymous]
-        [HttpPost("/ConfirmEmail")]
+        [HttpPost("/confirmEmail")]
         public IActionResult ConfirmEmail([FromBody]ConfirmationViewModel confirmation)
         {
-            var user = GetUserByCode(confirmation.Email, confirmation.Code);
-
+            var user = GetMemberByCode(confirmation.Email, confirmation.Code);
             if (user != null)
             {
                 return Json(new { Ok = true, User = user });
@@ -132,7 +137,7 @@ namespace HSEInformer.Server.Controllers
             }
         }
 
-        private HSEMember GetUserByCode(string email, string code)
+        private HSEMember GetMemberByCode(string email, string code)
         {
             var confirmation = _context.Confirmations.Include(c => c.Member)
                 .FirstOrDefault(e => e.Member.Email.ToLower() == email.ToLower().Trim());
@@ -157,46 +162,53 @@ namespace HSEInformer.Server.Controllers
         /// Успешно ли прошла авторизация, или нет
         /// </returns>
         [AllowAnonymous]
-        [HttpPost("/ConfirmEmail")]
-        public IActionResult Register(RegisterViewModel model)
+        [HttpPost("/register")]
+        public IActionResult Register([FromBody]RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
-                User user = new User
+                var member = GetMemberByCode(model.Email, model.Code);
+                if (member != null)
                 {
-                    Login = model.Email,
-                    Name = model.Name,
-                    Surname = model.Surname,
-                    Patronymic = model.Patronymic,
-                    Password = model.Password
-                };
+                    var user = new User
+                    {
+                        Name = member.Name,
+                        Surname = member.Surname,
+                        Patronymic = member.Patronymic,
+                        Login = member.Email,
+                        Password = model.Password
+                    };
 
-                var addStatus = AddUser(user);
+                    var addStatus = AddUser(user);
 
-                if (addStatus)
-                    return Json(new { Ok = false, Message = "Success" });
-                else
-                    return Json(new { Ok = false, Message = "The user already exists" });
+                    if (addStatus)
+                    {
+                        var confirmation = _context.Confirmations.Include(c => c.Member).FirstOrDefault(c => c.Member.Email == model.Email);
+                        _context.Confirmations.Remove(confirmation);
+
+                        return Json(new { Ok = true, Message = "Success" });
+                    }
+                    else
+                        return Json(new { Ok = false, Message = "The user already exists" });
+                }
+                else return Json(new { Ok = false, Message = "Confirmation code is incorrect" });
             }
-            return Json(new { Ok = false, Message = "Invalid registration form" });
+            else return Json(new { Ok = false, Message = "Invalid registration form" });
         }
 
         private bool AddUser(User user)
         {
-            if (!_context.Users.Any(u => u.Login.ToLower() == user.Login.ToLower()))
+            if (_context.Users.Any(u => u.Login.ToLower() == user.Login.ToLower()))
                 return false;
             else
             {
                 _context.Users.Add(user);
+                _context.SaveChanges();
                 return true;
+
             }
 
         }
-
-
-
-
-
 
 
         /// <summary>
@@ -260,8 +272,6 @@ namespace HSEInformer.Server.Controllers
             // если пользователя не найдено
             return null;
         }
-
-
 
 
     }
