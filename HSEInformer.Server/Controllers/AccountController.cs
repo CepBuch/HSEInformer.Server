@@ -44,7 +44,7 @@ namespace HSEInformer.Server.Controllers
             var user = _context.Users.FirstOrDefault(m => m.Login.ToLower() == email.ToLower().Trim());
 
             var memberExists = user != null;
-            return Json(new { Ok = true, exists = memberExists });
+            return Json(new { Ok = true, Result = memberExists });
         }
 
 
@@ -76,24 +76,22 @@ namespace HSEInformer.Server.Controllers
                     IConfirmationCodeGenerator generator = new CodeGenerator();
                     var code = generator.Generate();
 
-                    if (!string.IsNullOrWhiteSpace(code))
+                    IEmailManager manager = new EmailManager();
+                    var sendMailStatus = await manager.SendConfirmationEmailAsync(email, code);
+
+                    if (sendMailStatus)
                     {
-                        IEmailManager manager = new EmailManager();
-                        var sendMailStatus = await manager.SendConfirmationEmailAsync(email, code);
-
-                        if (sendMailStatus)
-                        {
-                            AddConfirmation(member, code);
-                        }
-                        else
-                        {
-                            return Json(new { Ok = false, Message = "Confirmation email cannoot be sent from a server" });
-                        }
-
+                        AddConfirmation(member, code);
+                    }
+                    else
+                    {
+                        return Json(new { Ok = false, Message = "Confirmation email cannoot be sent from a server" });
                     }
                 }
+                return Json(new { Ok = true, Result = memberExists });
             }
-            return Json(new { Ok = true, exists = memberExists });
+            return Json(new { Ok = false, Message = "The user already eists" });
+
         }
 
 
@@ -129,7 +127,7 @@ namespace HSEInformer.Server.Controllers
             var user = GetMemberByCode(confirmation.Email, confirmation.Code);
             if (user != null)
             {
-                return Json(new { Ok = true, User = user });
+                return Json(new { Ok = true, Result = user });
             }
             else
             {
@@ -185,7 +183,7 @@ namespace HSEInformer.Server.Controllers
                     {
                         var confirmation = _context.Confirmations.Include(c => c.Member).FirstOrDefault(c => c.Member.Email == model.Email);
                         _context.Confirmations.Remove(confirmation);
-
+                        _context.SaveChanges();
                         return Json(new { Ok = true, Message = "Success" });
                     }
                     else

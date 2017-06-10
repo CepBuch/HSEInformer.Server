@@ -7,7 +7,6 @@ namespace HSEInformer.Server.ViewModels
 {
     public class ConfirmationViewModel
     {
-
         public string Email { get; set; }
 
         public string Code { get; set; }

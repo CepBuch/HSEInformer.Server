@@ -12,15 +12,7 @@ namespace HSEInformer.Server.ViewModels
         public string Email { get; set; }
 
         [Required]
-        public string Name { get; set; }
-
-        [Required]
-        public string Surname{ get; set; }
-
-        [Required]
         public string Code { get; set; }
-
-        public string Patronymic { get; set; }
 
         [Required]
         [DataType(DataType.Password)]

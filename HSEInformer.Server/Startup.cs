@@ -32,9 +32,11 @@ namespace HSEInformer.Server
         {
             // Add framework services.
             services.AddMvc();
-
+           
             services.AddDbContext<HSEInformerServerContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("HSEInformerServerContext")));
+            
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -79,7 +81,6 @@ namespace HSEInformer.Server
 
             // вызываем инициализатор тестовыми данными
             DBInitializer.Initialize(app.ApplicationServices);
-
 
             app.UseMvc();
         }
