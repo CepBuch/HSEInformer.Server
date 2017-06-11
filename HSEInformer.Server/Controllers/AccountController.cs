@@ -184,7 +184,7 @@ namespace HSEInformer.Server.Controllers
                         var confirmation = _context.Confirmations.Include(c => c.Member).FirstOrDefault(c => c.Member.Email == model.Email);
                         _context.Confirmations.Remove(confirmation);
                         _context.SaveChanges();
-                        return Json(new { Ok = true, Message = "Success" });
+                        return Json(new { Ok = true, Result = true});
                     }
                     else
                         return Json(new { Ok = false, Message = "The user already exists" });
