@@ -32,7 +32,7 @@ namespace HSEInformer.Server
         {
             // Add framework services.
             services.AddMvc();
-           
+            services.AddSignalR();
             services.AddDbContext<HSEInformerServerContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("HSEInformerServerContext")));
             
@@ -83,6 +83,7 @@ namespace HSEInformer.Server
             DBInitializer.Initialize(app.ApplicationServices);
 
             app.UseMvc();
+            app.UseSignalR();
         }
     }
 }
