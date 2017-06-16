@@ -24,6 +24,14 @@ namespace HSEInformer.Server.Models
                         Surname = "Авакян",
                         Patronymic = "Амаякович",
                         Password = "202CB962AC59075B964B07152D234B70"
+                    },
+                    new User
+                    {
+                        Login = "sefremov@hse.ru",
+                        Name = "Сергей",
+                        Surname = "Ефремов",
+                        Patronymic = "Геннадьевич",
+                        Password = "202CB962AC59075B964B07152D234B70"
                     }
                 );
                 context.SaveChanges();
@@ -42,6 +50,22 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
+                        Year = 2,
+                        IsFacultyStarosta = false,
+                        IsGroupStarosta = false,
+                        IsYearStarosta = false
+                    },
+                    new HSEMember
+                    {
+                        Email = "aaavakyan@edu.hse.ru",
+                        Name = "Армен",
+                        Surname = "Авакян",
+                        Patronymic = "Амаякович",
+                        MemberType = MemberType.Student,
+                        StudyType = StudyType.Baccalaureate,
+                        Faculty = "Бизнес-Информатика",
+                        Group = "ББИ-151",
+                        Year = 2,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = false,
                         IsYearStarosta = false
@@ -56,6 +80,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
+                        Year = 2,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = true,
                         IsYearStarosta = false
@@ -70,6 +95,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
+                        Year = 2,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = false,
                         IsYearStarosta = false
@@ -84,6 +110,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
+                        Year = 2,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = false,
                         IsYearStarosta = false
@@ -98,9 +125,18 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-152",
+                        Year = 2,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = true,
                         IsYearStarosta = false
+                    },
+                    new HSEMember
+                    {
+                        Email = "sefremov@hse.ru",
+                        Name = "Сергей",
+                        Surname = "Ефремов",
+                        Patronymic = "Геннадьевич",
+                        MemberType = MemberType.Employee,
                     }
                 );
                 context.SaveChanges();

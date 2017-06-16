@@ -17,6 +17,7 @@ namespace HSEInformer.Server
         //public void SendMessage(string message)
         //{
         //    Clients.All.UpdateChatMessage(message);
+        //    Context.User.Identity.Name
         //}
 
         //// Подключение нового пользователя

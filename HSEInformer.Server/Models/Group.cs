@@ -11,7 +11,9 @@ namespace HSEInformer.Server.Models
 
         public string Name { get; set; }
 
-        public string GroupType { get; set; }
+        public GroupType GroupType { get; set; }
+
+        public int AdministratorId { get; set; }
 
         public User Administrator { get; set; }
 
@@ -23,4 +25,11 @@ namespace HSEInformer.Server.Models
             UserGroups = new List<UserGroup>();
         }
     }
+
+    public enum GroupType
+    {
+        AutoCreated,
+        Custom
+    }
+   
 }

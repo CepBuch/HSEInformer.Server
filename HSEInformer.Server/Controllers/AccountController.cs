@@ -59,9 +59,9 @@ namespace HSEInformer.Server.Controllers
         [HttpGet("/sendConfirmationCode")]
         public async Task<IActionResult> CheckUserIsHseMember([FromQuery]string email)
         {
-            if (!(email.EndsWith("edu.hse.ru") || email.EndsWith("hse.ru")))
+            if (!(email.EndsWith("@edu.hse.ru") || email.EndsWith("hse.ru")))
             {
-                return Json(new { Ok = false, Message = "Email should be ended with edu.hse.ru or hse.ru" });
+                return Json(new { Ok = false, Message = "Email should be ended with @edu.hse.ru or @hse.ru" });
             }
 
             var user = _context.Users.Any(m => m.Login.ToLower() == email.ToLower().Trim());
@@ -183,8 +183,9 @@ namespace HSEInformer.Server.Controllers
                     {
                         var confirmation = _context.Confirmations.Include(c => c.Member).FirstOrDefault(c => c.Member.Email == model.Email);
                         _context.Confirmations.Remove(confirmation);
+                        AddUserToGroups(member,user);
                         _context.SaveChanges();
-                        return Json(new { Ok = true, Result = true});
+                        return Json(new { Ok = true, Result = true });
                     }
                     else
                         return Json(new { Ok = false, Message = "The user already exists" });
@@ -201,7 +202,6 @@ namespace HSEInformer.Server.Controllers
             else
             {
                 _context.Users.Add(user);
-                AddUserToGroups(user);
                 _context.SaveChanges();
                 return true;
 
@@ -209,9 +209,44 @@ namespace HSEInformer.Server.Controllers
 
         }
 
-        private void AddUserToGroups(User user)
+        private void AddUserToGroups(HSEMember member, User user)
         {
+            if (member.MemberType == 0)
+            {
+                if (!string.IsNullOrWhiteSpace(member.Group))
+                {
+                    var groups = _context.Groups;
 
+                    if (groups.Any(g => g.Name.ToLower() == member.Group.ToLower()))
+                    {
+                        //добавить
+                    }
+                    else
+                    {
+                        var group = new Group
+                        {
+                            Name = member.Group,
+                            Administrator = member.IsGroupStarosta ? user : null,
+                            GroupType = GroupType.AutoCreated,
+                        };
+                        _context.Groups.Add(group);
+                        _context.SaveChanges();
+                        group.UserGroups = new List<UserGroup>
+                        {
+                            new UserGroup
+                            {
+                                GroupId = group.Id,
+                                UserId = user.Id
+                            }
+                        };
+
+                    }
+                }
+            }
+            else
+            {
+                //Если сотрудник
+            }
         }
 
 
