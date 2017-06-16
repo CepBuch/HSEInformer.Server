@@ -201,10 +201,16 @@ namespace HSEInformer.Server.Controllers
             else
             {
                 _context.Users.Add(user);
+                AddUserToGroups(user);
                 _context.SaveChanges();
                 return true;
 
             }
+
+        }
+
+        private void AddUserToGroups(User user)
+        {
 
         }
 

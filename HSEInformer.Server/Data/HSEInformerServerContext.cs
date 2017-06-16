@@ -8,15 +8,47 @@ namespace HSEInformer.Server.Models
 {
     public class HSEInformerServerContext : DbContext
     {
-        public HSEInformerServerContext (DbContextOptions<HSEInformerServerContext> options)
+        public HSEInformerServerContext(DbContextOptions<HSEInformerServerContext> options)
             : base(options)
         {
+
         }
 
-        public DbSet<HSEInformer.Server.Models.User> Users { get; set; }
 
-        public DbSet<HSEInformer.Server.Models.Confirmation> Confirmations { get; set; }
+        public DbSet<HSEMember> HseMembers { get; set; }
 
-        public DbSet<HSEInformer.Server.Models.HSEMember> HseMembers { get; set; }
+        public DbSet<User> Users { get; set; }
+
+        public DbSet<Confirmation> Confirmations { get; set; }
+
+        public DbSet<Group> Groups { get; set; }
+
+        public DbSet<Post> Posts { get; set; }
+
+        public DbSet<PostPermission> PostPermissions { get; set; }
+
+        public DbSet<PostPermissionRequest> PostPermissionRequests { get; set; }
+
+        public DbSet<InviteToGroup> Invites { get; set; }
+
+        public DbSet<Deadline> Deadlines { get; set; }
+
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<UserGroup>()
+                .HasKey(t => new { t.GroupId, t.UserId });
+
+            modelBuilder.Entity<UserGroup>()
+                .HasOne(ug => ug.User)
+                .WithMany(u => u.UserGroups)
+                .HasForeignKey(ug => ug.UserId);
+
+            modelBuilder.Entity<UserGroup>()
+               .HasOne(ug => ug.Group)
+               .WithMany(g => g.UserGroups)
+               .HasForeignKey(ug => ug.GroupId);
+        }
+
     }
 }

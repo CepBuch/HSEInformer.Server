@@ -16,6 +16,8 @@ namespace HSEInformer.Server.Models
         [Required]
         public string Password { get; set; }
 
+        public string Token { get; set; }
+
 
         [Required]
         public string Name { get; set; }
@@ -26,6 +28,14 @@ namespace HSEInformer.Server.Models
 
 
         public string Patronymic { get; set; }
+
+
+        public List<UserGroup> UserGroups { get; set; }
+
+        public User()
+        {
+            UserGroups = new List<UserGroup>();
+        }
 
     }
 

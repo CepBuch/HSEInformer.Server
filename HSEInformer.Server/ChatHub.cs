@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,13 +11,13 @@ namespace HSEInformer.Server
     public class ChatHub : Hub
     {
 
-        static List<HubUser> Users = new List<HubUser>();
+        //static List<HubUser> Users = new List<HubUser>();
 
-        // Отправка сообщений
-        public void SendMessage(string name, string message)
-        {
-            Clients.All.UpdateChatMessage(name, message);
-        }
+        //// Отправка сообщений
+        //public void SendMessage(string message)
+        //{
+        //    Clients.All.UpdateChatMessage(message);
+        //}
 
         //// Подключение нового пользователя
         //public void Connect(string userName)

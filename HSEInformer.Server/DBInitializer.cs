@@ -23,7 +23,7 @@ namespace HSEInformer.Server.Models
                         Name = "Армен",
                         Surname = "Авакян",
                         Patronymic = "Амаякович",
-                        Password = "123"
+                        Password = "202CB962AC59075B964B07152D234B70"
                     }
                 );
                 context.SaveChanges();
@@ -37,15 +37,72 @@ namespace HSEInformer.Server.Models
                         Email = "sabuchko@edu.hse.ru",
                         Name = "Сергей",
                         Surname = "Бучко",
-                        Patronymic = "Алексанлрович"
+                        Patronymic = "Александрович",
+                        MemberType = MemberType.Student,
+                        StudyType = StudyType.Baccalaureate,
+                        Faculty = "Бизнес-Информатика",
+                        Group = "ББИ-151",
+                        IsFacultyStarosta = false,
+                        IsGroupStarosta = false,
+                        IsYearStarosta = false
                     },
                     new HSEMember
                     {
-                        Email = "emttukhova@edu.hse.ru",
+                        Email = "emtyukhova@edu.hse.ru",
                         Name = "Елена",
                         Surname = "Тюхова",
-                        Patronymic = "Михайловна"
-                });
+                        Patronymic = "Михайловна",
+                        MemberType = MemberType.Student,
+                        StudyType = StudyType.Baccalaureate,
+                        Faculty = "Бизнес-Информатика",
+                        Group = "ББИ-151",
+                        IsFacultyStarosta = false,
+                        IsGroupStarosta = true,
+                        IsYearStarosta = false
+                    },
+                    new HSEMember
+                    {
+                        Email = "imsereda@edu.hse.ru",
+                        Name = "Иван",
+                        Surname = "Середа",
+                        Patronymic = "Михайлович",
+                        MemberType = MemberType.Student,
+                        StudyType = StudyType.Baccalaureate,
+                        Faculty = "Бизнес-Информатика",
+                        Group = "ББИ-151",
+                        IsFacultyStarosta = false,
+                        IsGroupStarosta = false,
+                        IsYearStarosta = false
+                    },
+                    new HSEMember
+                    {
+                        Email = "memerkushina@edu.hse.ru",
+                        Name = "Мария",
+                        Surname = "Меркушина",
+                        Patronymic = "Евгеньевна",
+                        MemberType = MemberType.Student,
+                        StudyType = StudyType.Baccalaureate,
+                        Faculty = "Бизнес-Информатика",
+                        Group = "ББИ-151",
+                        IsFacultyStarosta = false,
+                        IsGroupStarosta = false,
+                        IsYearStarosta = false
+                    },
+                    new HSEMember
+                    {
+                        Email = "aaalayeva@edu.hse.ru",
+                        Name = "Антонина",
+                        Surname = "Алаева",
+                        Patronymic = "Александровна",
+                        MemberType = MemberType.Student,
+                        StudyType = StudyType.Baccalaureate,
+                        Faculty = "Бизнес-Информатика",
+                        Group = "ББИ-152",
+                        IsFacultyStarosta = false,
+                        IsGroupStarosta = true,
+                        IsYearStarosta = false
+                    }
+                );
                 context.SaveChanges();
             }
 
