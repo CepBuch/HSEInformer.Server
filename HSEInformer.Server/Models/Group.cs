@@ -13,8 +13,6 @@ namespace HSEInformer.Server.Models
 
         public GroupType GroupType { get; set; }
 
-        public int AdministratorId { get; set; }
-
         public User Administrator { get; set; }
 
 

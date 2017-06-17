@@ -85,7 +85,7 @@ namespace HSEInformer.Server.Models
                 context.Groups.Add(group3);
                 context.SaveChanges();
 
-                group2.UserGroups = new List<UserGroup>
+                group3.UserGroups = new List<UserGroup>
                 {
                     new UserGroup
                     {
