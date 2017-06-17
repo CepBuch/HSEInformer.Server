@@ -19,7 +19,7 @@ namespace HSEInformer.Server.Models
                 context.Users.AddRange(
                     new User
                     {
-                        Login = "aaavakyan@edu.hse.ru",
+                        Username = "aaavakyan@edu.hse.ru",
                         Name = "Армен",
                         Surname = "Авакян",
                         Patronymic = "Амаякович",
@@ -27,7 +27,7 @@ namespace HSEInformer.Server.Models
                     },
                     new User
                     {
-                        Login = "sefremov@hse.ru",
+                        Username = "sefremov@hse.ru",
                         Name = "Сергей",
                         Surname = "Ефремов",
                         Patronymic = "Геннадьевич",

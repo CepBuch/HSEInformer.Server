@@ -41,7 +41,7 @@ namespace HSEInformer.Server.Controllers
                 return Json(new { Ok = false, Message = "Email should be ended with edu.hse.ru or hse.ru" });
             }
 
-            var user = _context.Users.FirstOrDefault(m => m.Login.ToLower() == email.ToLower().Trim());
+            var user = _context.Users.FirstOrDefault(m => m.Username.ToLower() == email.ToLower().Trim());
 
             var memberExists = user != null;
             return Json(new { Ok = true, Result = memberExists });
@@ -64,7 +64,7 @@ namespace HSEInformer.Server.Controllers
                 return Json(new { Ok = false, Message = "Email should be ended with @edu.hse.ru or @hse.ru" });
             }
 
-            var user = _context.Users.Any(m => m.Login.ToLower() == email.ToLower().Trim());
+            var user = _context.Users.Any(m => m.Username.ToLower() == email.ToLower().Trim());
 
             bool memberExists = false;
             if (!user)
@@ -173,7 +173,7 @@ namespace HSEInformer.Server.Controllers
                         Name = member.Name,
                         Surname = member.Surname,
                         Patronymic = member.Patronymic,
-                        Login = member.Email,
+                        Username = member.Email,
                         Password = model.Password
                     };
 
@@ -197,7 +197,7 @@ namespace HSEInformer.Server.Controllers
 
         private bool AddUser(User user)
         {
-            if (_context.Users.Any(u => u.Login.ToLower() == user.Login.ToLower()))
+            if (_context.Users.Any(u => u.Username.ToLower() == user.Username.ToLower()))
                 return false;
             else
             {
@@ -246,11 +246,18 @@ namespace HSEInformer.Server.Controllers
             if (_context.Groups.Any(g => g.Name == groupName))
             {
                 var group = _context.Groups.First(g => g.Name == groupName);
+
                 group.UserGroups.Add(new UserGroup
                 {
                     GroupId = group.Id,
                     UserId = user.Id
                 });
+                
+                if(isStarosta)
+                {
+                    group.Administrator = user;
+                    _context.SaveChanges();
+                }
             }
             else
             {
@@ -322,12 +329,12 @@ namespace HSEInformer.Server.Controllers
 
         private ClaimsIdentity GetIdentity(string username, string password)
         {
-            var user = _context.Users.FirstOrDefault(x => x.Login == username && x.Password == password);
+            var user = _context.Users.FirstOrDefault(x => x.Username == username && x.Password == password);
             if (user != null)
             {
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),
+                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.Username),
                 };
                 ClaimsIdentity claimsIdentity =
                 new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,

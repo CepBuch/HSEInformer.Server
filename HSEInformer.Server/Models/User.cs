@@ -11,7 +11,7 @@ namespace HSEInformer.Server.Models
         public int Id { get; set; }
 
         [Required]
-        public string Login { get; set; }
+        public string Username { get; set; }
 
         [Required]
         public string Password { get; set; }
