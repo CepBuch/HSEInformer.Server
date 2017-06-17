@@ -183,7 +183,7 @@ namespace HSEInformer.Server.Controllers
                     {
                         var confirmation = _context.Confirmations.Include(c => c.Member).FirstOrDefault(c => c.Member.Email == model.Email);
                         _context.Confirmations.Remove(confirmation);
-                        AddUserToGroups(member,user);
+                        AddUserToGroups(member, user);
                         _context.SaveChanges();
                         return Json(new { Ok = true, Result = true });
                     }
@@ -213,40 +213,67 @@ namespace HSEInformer.Server.Controllers
         {
             if (member.MemberType == 0)
             {
+                var groups = _context.Groups;
+
+                //Добавляем в канал группы студента 
                 if (!string.IsNullOrWhiteSpace(member.Group))
                 {
-                    var groups = _context.Groups;
+                    CreateOrAddToGroup(member.Group, user, member.IsGroupStarosta);
+                }
 
-                    if (groups.Any(g => g.Name.ToLower() == member.Group.ToLower()))
-                    {
-                        //добавить
-                    }
-                    else
-                    {
-                        var group = new Group
-                        {
-                            Name = member.Group,
-                            Administrator = member.IsGroupStarosta ? user : null,
-                            GroupType = GroupType.AutoCreated,
-                        };
-                        _context.Groups.Add(group);
-                        _context.SaveChanges();
-                        group.UserGroups = new List<UserGroup>
-                        {
-                            new UserGroup
-                            {
-                                GroupId = group.Id,
-                                UserId = user.Id
-                            }
-                        };
+                if (!string.IsNullOrWhiteSpace(member.Faculty))
+                {
+                    //Добавляем в канал факультета студента
+                    CreateOrAddToGroup(member.Faculty, user, member.IsFacultyStarosta);
 
+                    //Добавляем в канал потока
+                    if (member.StartDate >= 1992)
+                    {
+                        var yearFlowGroupName = $"{member.Faculty} {member.StartDate}";
+                        CreateOrAddToGroup(yearFlowGroupName, user, member.IsYearStarosta);
                     }
                 }
             }
             else
             {
-                //Если сотрудник
+                //Если сотрудник: пока не предусмотрено групп для сотрудника
             }
+        }
+
+
+        private void CreateOrAddToGroup(string groupName, User user, bool isStarosta)
+        {
+            if (_context.Groups.Any(g => g.Name == groupName))
+            {
+                var group = _context.Groups.First(g => g.Name == groupName);
+                group.UserGroups.Add(new UserGroup
+                {
+                    GroupId = group.Id,
+                    UserId = user.Id
+                });
+            }
+            else
+            {
+                var group = new Group
+                {
+                    Name = groupName,
+                    Administrator = isStarosta ? user : null,
+                    GroupType = GroupType.AutoCreated,
+                };
+                _context.Groups.Add(group);
+                _context.SaveChanges();
+
+                group.UserGroups = new List<UserGroup>
+                {
+                    new UserGroup
+                    {
+                        GroupId = group.Id,
+                        UserId = user.Id
+                    }
+                };
+            }
+            _context.SaveChanges();
+
         }
 
 

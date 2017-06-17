@@ -37,6 +37,65 @@ namespace HSEInformer.Server.Models
                 context.SaveChanges();
             }
 
+            if(!context.Groups.Any())
+            {
+                var group1 = new Group
+                {
+                    Name = "ББИ-151",
+                    Administrator = null,
+                    GroupType = GroupType.AutoCreated,
+                };
+                context.Groups.Add(group1);
+                context.SaveChanges();
+
+                group1.UserGroups = new List<UserGroup>
+                {
+                    new UserGroup
+                    {
+                        GroupId = group1.Id,
+                        UserId = 1
+                    }
+                };
+
+                var group2 = new Group
+                {
+                    Name = "Бизнес-Информатика",
+                    Administrator = null,
+                    GroupType = GroupType.AutoCreated,
+                };
+                context.Groups.Add(group2);
+                context.SaveChanges();
+
+                group2.UserGroups = new List<UserGroup>
+                {
+                    new UserGroup
+                    {
+                        GroupId = group2.Id,
+                        UserId = 1
+                    }
+                };
+
+
+                var group3 = new Group
+                {
+                    Name = "Бизнес-Информатика 2015",
+                    Administrator = null,
+                    GroupType = GroupType.AutoCreated,
+                };
+                context.Groups.Add(group3);
+                context.SaveChanges();
+
+                group2.UserGroups = new List<UserGroup>
+                {
+                    new UserGroup
+                    {
+                        GroupId = group3.Id,
+                        UserId = 1
+                    }
+                };
+                context.SaveChanges();
+            }
+
             if (!context.HseMembers.Any())
             {
                 context.HseMembers.AddRange(
@@ -50,7 +109,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
-                        Year = 2,
+                        StartDate = 2015,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = false,
                         IsYearStarosta = false
@@ -65,7 +124,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
-                        Year = 2,
+                        StartDate = 2015,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = false,
                         IsYearStarosta = false
@@ -80,7 +139,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
-                        Year = 2,
+                        StartDate = 2015,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = true,
                         IsYearStarosta = false
@@ -95,7 +154,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
-                        Year = 2,
+                        StartDate = 2015,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = false,
                         IsYearStarosta = false
@@ -110,7 +169,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-151",
-                        Year = 2,
+                        StartDate = 2015,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = false,
                         IsYearStarosta = false
@@ -125,7 +184,7 @@ namespace HSEInformer.Server.Models
                         StudyType = StudyType.Baccalaureate,
                         Faculty = "Бизнес-Информатика",
                         Group = "ББИ-152",
-                        Year = 2,
+                        StartDate = 2015,
                         IsFacultyStarosta = false,
                         IsGroupStarosta = true,
                         IsYearStarosta = false

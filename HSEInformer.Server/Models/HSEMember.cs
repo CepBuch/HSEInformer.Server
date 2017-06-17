@@ -27,7 +27,7 @@ namespace HSEInformer.Server.Models
 
         public StudyType StudyType { get; set; }
 
-        public int Year { get; set; }
+        public int StartDate { get; set; }
 
         public string Faculty { get; set; }
 
