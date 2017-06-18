@@ -127,7 +127,18 @@ namespace HSEInformer.Server.Controllers
             var user = GetMemberByCode(confirmation.Email, confirmation.Code);
             if (user != null)
             {
-                return Json(new { Ok = true, Result = user });
+                return Json(new
+                {
+                    Ok = true,
+                    Result = new DTO.DTOUser
+                    {
+                        Name = user.Name,
+                        Username = user.Email,
+                        Surname = user.Surname,
+                        Patronymic = user.Patronymic
+
+                    }
+                });
             }
             else
             {
@@ -256,6 +267,11 @@ namespace HSEInformer.Server.Controllers
                 if(isStarosta)
                 {
                     group.Administrator = user;
+                    _context.PostPermissions.Add(new PostPermission
+                    {
+                        Group = group,
+                        User = user
+                    });
                     _context.SaveChanges();
                 }
             }
