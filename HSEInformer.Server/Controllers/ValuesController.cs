@@ -477,7 +477,7 @@ namespace HSEInformer.Server.Controllers
                 string content = model.Content;
 
 
-                //Находится ли пользователь в данной группе
+                //Существует ли такая группа
                 var group = _context.Groups
                    .Include(g => g.UserGroups)
                    .ThenInclude(ug => ug.User)
@@ -496,7 +496,7 @@ namespace HSEInformer.Server.Controllers
                         Content = content,
                         User = user,
                         Group = group,
-                        Time = DateTime.Now
+                        Time = DateTime.UtcNow
                     };
                     _context.Posts.Add(post);
                     _context.SaveChanges();

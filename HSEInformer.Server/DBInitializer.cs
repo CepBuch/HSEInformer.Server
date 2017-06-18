@@ -221,7 +221,7 @@ namespace HSEInformer.Server.Models
                    {
                        Group = group1,
                        Theme = "Знакомимся",
-                       Time = DateTime.Now - TimeSpan.FromDays(2),
+                       Time = DateTime.UtcNow - TimeSpan.FromDays(2),
                        Content = "Добрый день, мои новые одногруппники! Я ваша староста. Если я недоступна здесь, то звоните мне по номеру +79256410156",
                        User = lena
                    },
@@ -229,7 +229,7 @@ namespace HSEInformer.Server.Models
                     {
                         Group = group1,
                         Theme = "Открытие регистрации",
-                        Time = DateTime.Now - TimeSpan.FromMinutes(1000),
+                        Time = DateTime.UtcNow - TimeSpan.FromMinutes(1000),
                         Content = "Всем привет! Администрация просила передать, что сегодня в 20:00 откроется регистрация на концерт группы СПЛИН.",
                         User = lena
                     },
@@ -237,7 +237,7 @@ namespace HSEInformer.Server.Models
                     {
                         Group = group2,
                         Theme = "Сессия приближается",
-                        Time = DateTime.Now,
+                        Time = DateTime.UtcNow,
                         Content = "Здравствуйте, дорогие студенты! Приближается сессия, всем желаю удачи. " +
                         "Если вы заметили какую-то несправедлиовость, то можете обращаться ко мне или напрямую к студсовету.",
                         User = vika
