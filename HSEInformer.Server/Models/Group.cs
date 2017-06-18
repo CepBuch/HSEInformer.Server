@@ -15,7 +15,6 @@ namespace HSEInformer.Server.Models
 
         public User Administrator { get; set; }
 
-
         public List<UserGroup> UserGroups { get; set; }
 
         public Group()
