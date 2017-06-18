@@ -187,7 +187,7 @@ namespace HSEInformer.Server.Models
                     {
                         GroupId = group5.Id,
                         UserId = vika.Id
-                    }
+                    },
                 };
                 context.Groups.Add(group5);
                 context.SaveChanges();
@@ -195,7 +195,7 @@ namespace HSEInformer.Server.Models
                 var group6 = new Group
                 {
                     Name = "ББИ-152",
-                    Administrator = null,
+                    Administrator = tonya,
                     GroupType = GroupType.AutoCreated,
                 };
                 group6.UserGroups = new List<UserGroup>
@@ -228,7 +228,30 @@ namespace HSEInformer.Server.Models
                         User = lena
                     });
                 context.SaveChanges();
+
+                if (!context.PostPermissions.Any())
+                {
+                    context.PostPermissions.AddRange(
+                        new PostPermission
+                        {
+                            Group = group1,
+                            User = lena
+                        },
+                        new PostPermission
+                        {
+                            Group = group6,
+                            User = tonya
+                        },
+                        new PostPermission
+                        {
+                            Group = group2,
+                            User = vika
+                        });
+                }
+                context.SaveChanges();
             }
+
+
 
 
             if (!context.HseMembers.Any())
@@ -349,6 +372,8 @@ namespace HSEInformer.Server.Models
                     }
                 );
                 context.SaveChanges();
+
+
             }
 
         }
