@@ -14,6 +14,15 @@ namespace HSEInformer.Server.Models
             var context = serviceProvider.GetService<HSEInformerServerContext>();
             context.Database.EnsureCreated();
 
+            var lena = new User
+            {
+                Username = "emtyukhova@edu.hse.ru",
+                Name = "Елена",
+                Surname = "Тюхова",
+                Patronymic = "Михайловна",
+                Password = "202CB962AC59075B964B07152D234B70"
+            };
+
             if (!context.Users.Any())
             {
                 context.Users.AddRange(
@@ -25,6 +34,7 @@ namespace HSEInformer.Server.Models
                         Patronymic = "Амаякович",
                         Password = "202CB962AC59075B964B07152D234B70"
                     },
+                    lena,
                     new User
                     {
                         Username = "sefremov@hse.ru",
@@ -37,12 +47,12 @@ namespace HSEInformer.Server.Models
                 context.SaveChanges();
             }
 
-            if(!context.Groups.Any())
+            if (!context.Groups.Any())
             {
                 var group1 = new Group
                 {
                     Name = "ББИ-151",
-                    Administrator = null,
+                    Administrator = lena,
                     GroupType = GroupType.AutoCreated,
                 };
                 context.Groups.Add(group1);
@@ -54,6 +64,11 @@ namespace HSEInformer.Server.Models
                     {
                         GroupId = group1.Id,
                         UserId = 1
+                    },
+                       new UserGroup
+                    {
+                        GroupId = group1.Id,
+                        UserId = 2
                     }
                 };
 
@@ -71,7 +86,13 @@ namespace HSEInformer.Server.Models
                     new UserGroup
                     {
                         GroupId = group2.Id,
-                        UserId = 1
+                        UserId = 1,
+
+                    },
+                       new UserGroup
+                    {
+                        GroupId = group2.Id,
+                        UserId = 2
                     }
                 };
 
@@ -91,10 +112,36 @@ namespace HSEInformer.Server.Models
                     {
                         GroupId = group3.Id,
                         UserId = 1
+                    },
+                       new UserGroup
+                    {
+                        GroupId = group3.Id,
+                        UserId = 2
                     }
                 };
                 context.SaveChanges();
+
+
+                context.Posts.AddRange(
+                   new Post
+                   {
+                       Group = group1,
+                       Theme = "Знакомимся",
+                       Time = DateTime.Now- TimeSpan.FromDays(2),
+                       Content = "Добрый день, мои новые одногруппники! Я ваша староста. Если я недоступна здесь, то звоните мне по номеру +79256410156",
+                       User = lena
+                   },
+                    new Post
+                    {
+                        Group = group1,
+                        Theme = "Открытие регистрации",
+                        Time = DateTime.Now,
+                        Content = "Всем привет! Администрация просила передать, что сегодня в 20:00 откроется регистрация на концерт группы СПЛИН.",
+                        User = lena
+                    });
+                context.SaveChanges();
             }
+
 
             if (!context.HseMembers.Any())
             {

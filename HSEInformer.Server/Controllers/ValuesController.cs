@@ -62,10 +62,113 @@ namespace HSEInformer.Server.Controllers
 
 
 
+        //[Authorize]
+        //[HttpGet]
+        //[Route("getGroupContent")]
+        //public IActionResult GetGroupContent([FromQuery]int id)
+        //{
+        //    //Получаем из токена username
+        //    var username = User.Identity.Name;
+
+        //    //Ищем данного пользователя
+        //    var user = _context.Users
+        //           .Include(u => u.UserGroups)
+        //           .ThenInclude(ug => ug.Group)
+        //           .FirstOrDefault(u => u.Username == username);
+        //    //Ищем, есть ли у пользователя данная группа
+        //    var usergroup = user.UserGroups
+        //        .FirstOrDefault(ug => ug.GroupId == id);
+        //    var userIsInGroup = usergroup != null;
+        //    var group = _context.Groups
+        //       .Include(g => g.UserGroups)
+        //       .ThenInclude(ug => ug.User)
+        //       .FirstOrDefault(g => g.Id == id);
+
+
+        //    if (user != null && userIsInGroup && group != null)
+        //    {
+        //        //Сообщения в группe
+        //        var posts = _context.Posts.Where(p => p.Group.Id == id).ToArray();
+
+        //        //Люди в группе
+        //        var groupMembers = group.UserGroups.Select(ug => ug.User).ToArray();
+
+        //        PostPermissionRequest[] requests = new PostPermissionRequest[0];
+        //        PostPermission[] permissons = new PostPermission[0];
+        //        bool isAdministrator = false;
+
+        //        //Если пользователь - админ, то запросы на публикацию и люди, которые могут публиковать
+        //        if (group.Administrator != null && group.Administrator.Id == user.Id)
+        //        {
+        //            isAdministrator = true;
+        //            requests = _context.PostPermissionRequests
+        //                .Include(r => r.User)
+        //                .Where(r => r.Group.Id == id).ToArray();
+        //            permissons = _context.PostPermissions
+        //                .Include(r => r.User)
+        //                .Where(r => r.Group.Id == id).ToArray();
+        //        }
+
+        //        return Json(new
+        //        {
+        //            Ok = true,
+        //            Result = new
+        //            {
+        //                IsAdministrator = isAdministrator,
+        //                Posts = posts.Select(p => new DTOPost
+        //                {
+        //                    Id = p.Id,
+        //                    Theme = p.Theme,
+        //                    Content = p.Content,
+        //                    Time = p.Time,
+        //                    User = new DTOUser
+        //                    {
+        //                        Id = p.User.Id,
+        //                        Username = p.User.Username,
+        //                        Name = p.User.Name,
+        //                        Surname = p.User.Surname,
+        //                        Patronymic = p.User.Patronymic
+        //                    }
+        //                }),
+        //                Members = groupMembers.Select(m => new DTOUser
+        //                {
+        //                    Id = m.Id,
+        //                    Username = m.Username,
+        //                    Name = m.Name,
+        //                    Surname = m.Surname,
+        //                    Patronymic = m.Patronymic
+        //                }),
+        //                Requests = requests.Select(ppr => new DTOUser
+        //                {
+        //                    Id = ppr.User.Id,
+        //                    Username = ppr.User.Username,
+        //                    Name = ppr.User.Name,
+        //                    Surname = ppr.User.Surname,
+        //                    Patronymic = ppr.User.Patronymic
+        //                }),
+        //                Permissons = permissons.Select(pp => new DTOUser
+        //                {
+        //                    Id = pp.User.Id,
+        //                    Username = pp.User.Username,
+        //                    Name = pp.User.Name,
+        //                    Surname = pp.User.Surname,
+        //                    Patronymic = pp.User.Patronymic
+        //                })
+        //            }
+        //        });
+        //    }
+        //    else
+        //    {
+        //        return Unauthorized();
+        //    }
+        //}
+
+
+
         [Authorize]
         [HttpGet]
-        [Route("getGroupContent")]
-        public IActionResult GetGroupContent([FromQuery]int id)
+        [Route("checkIfAdmin")]
+        public IActionResult CheckIfAdmin([FromQuery]int id)
         {
             //Получаем из токена username
             var username = User.Identity.Name;
@@ -75,10 +178,11 @@ namespace HSEInformer.Server.Controllers
                    .Include(u => u.UserGroups)
                    .ThenInclude(ug => ug.Group)
                    .FirstOrDefault(u => u.Username == username);
-            //Ищем, есть ли у пользователя данная гуппа
+            //Ищем, есть ли у пользователя данная группа
             var usergroup = user.UserGroups
                 .FirstOrDefault(ug => ug.GroupId == id);
             var userIsInGroup = usergroup != null;
+
             var group = _context.Groups
                .Include(g => g.UserGroups)
                .ThenInclude(ug => ug.User)
@@ -87,35 +191,50 @@ namespace HSEInformer.Server.Controllers
 
             if (user != null && userIsInGroup && group != null)
             {
-                //Сообщения в группe
-                var posts = _context.Posts.Where(p => p.Group.Id == id).ToArray();
-
-                //Люди в группе
-                var groupMembers = group.UserGroups.Select(ug => ug.User).ToArray();
-
-                PostPermissionRequest[] requests = new PostPermissionRequest[0];
-                PostPermission[] permissons = new PostPermission[0];
-                bool isAdministrator = false;
-
-                //Если пользователь - админ, то запросы на публикацию и люди, которые могут публиковать
-                if (group.Administrator != null && group.Administrator.Id == user.Id)
-                {
-                    isAdministrator = true;
-                    requests = _context.PostPermissionRequests
-                        .Include(r => r.User)
-                        .Where(r => r.Group.Id == id).ToArray();
-                    permissons = _context.PostPermissions
-                        .Include(r => r.User)
-                        .Where(r => r.Group.Id == id).ToArray();
-                }
-
+               
                 return Json(new
                 {
                     Ok = true,
-                    Result = new
-                    {
-                        IsAdministrator = isAdministrator,
-                        Posts = posts.Select(p => new DTOPost
+                    Result = (group.Administrator != null && group.Administrator.Id == user.Id),
+                });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
+        [Authorize]
+        [HttpGet]
+        [Route("getPosts")]
+        public IActionResult GetPosts([FromQuery]int id)
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+            //Ищем, есть ли у пользователя данная группа
+            var usergroup = user.UserGroups
+                .FirstOrDefault(ug => ug.GroupId == id);
+            var userIsInGroup = usergroup != null;
+
+
+
+            if (user != null && userIsInGroup)
+            {
+                //Сообщения в группe
+                var posts = _context.Posts.Where(p => p.Group.Id == id).ToArray();
+                
+                return Json(new
+                {
+                    Ok = true,
+                    Result =  posts.Select(p => new DTOPost
                         {
                             Id = p.Id,
                             Theme = p.Theme,
@@ -129,32 +248,56 @@ namespace HSEInformer.Server.Controllers
                                 Surname = p.User.Surname,
                                 Patronymic = p.User.Patronymic
                             }
-                        }),
-                        Members = groupMembers.Select(m => new DTOUser
+                        })
+                });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("getGroupMembers")]
+        public IActionResult GetGroupMembers([FromQuery]int id)
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+            //Ищем, есть ли у пользователя данная группа
+            var usergroup = user.UserGroups
+                .FirstOrDefault(ug => ug.GroupId == id);
+            var userIsInGroup = usergroup != null;
+
+            var group = _context.Groups
+               .Include(g => g.UserGroups)
+               .ThenInclude(ug => ug.User)
+               .FirstOrDefault(g => g.Id == id);
+
+
+            if (user != null && userIsInGroup && group != null)
+            {
+                //Люди в группе
+                var groupMembers = group.UserGroups.Select(ug => ug.User).ToArray();
+                
+                return Json(new
+                {
+                    Ok = true,
+                    Result =   
+                        groupMembers.Select(m => new DTOUser
                         {
                             Id = m.Id,
                             Username = m.Username,
                             Name = m.Name,
                             Surname = m.Surname,
                             Patronymic = m.Patronymic
-                        }),
-                        Requests = requests.Select(ppr => new DTOUser
-                        {
-                            Id = ppr.User.Id,
-                            Username = ppr.User.Username,
-                            Name = ppr.User.Name,
-                            Surname = ppr.User.Surname,
-                            Patronymic = ppr.User.Patronymic
-                        }),
-                        Permissons = permissons.Select(pp => new DTOUser
-                        {
-                            Id = pp.User.Id,
-                            Username = pp.User.Username,
-                            Name = pp.User.Name,
-                            Surname = pp.User.Surname,
-                            Patronymic = pp.User.Patronymic
                         })
-                    }
                 });
             }
             else
