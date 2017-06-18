@@ -17,7 +17,7 @@ namespace HSEInformer.Server.Models
             var lena = new User
             {
                 Username = "emtyukhova@edu.hse.ru",
-                Name = "Елена",
+                Name = "Елена",     
                 Surname = "Тюхова",
                 Patronymic = "Михайловна",
                 Password = "202CB962AC59075B964B07152D234B70"
@@ -41,17 +41,19 @@ namespace HSEInformer.Server.Models
                 Password = "202CB962AC59075B964B07152D234B70"
             };
 
+            var armen = new User
+            {
+                Username = "aaavakyan@edu.hse.ru",
+                Name = "Армен",
+                Surname = "Авакян",
+                Patronymic = "Амаякович",
+                Password = "202CB962AC59075B964B07152D234B70"
+            };
+
             if (!context.Users.Any())
             {
                 context.Users.AddRange(
-                    new User
-                    {
-                        Username = "aaavakyan@edu.hse.ru",
-                        Name = "Армен",
-                        Surname = "Авакян",
-                        Patronymic = "Амаякович",
-                        Password = "202CB962AC59075B964B07152D234B70"
-                    },
+                    armen,
                     lena,
                     new User
                     {
@@ -112,7 +114,7 @@ namespace HSEInformer.Server.Models
                        new UserGroup
                     {
                         GroupId = group2.Id,
-                        UserId = 2
+                        UserId = lena.Id
                     },
                           new UserGroup
                     {
@@ -163,6 +165,8 @@ namespace HSEInformer.Server.Models
                     Administrator = null,
                     GroupType = GroupType.AutoCreated,
                 };
+                context.Groups.Add(group4);
+                context.SaveChanges();
                 group4.UserGroups = new List<UserGroup>
                 {
                     new UserGroup
@@ -171,7 +175,6 @@ namespace HSEInformer.Server.Models
                         UserId = vika.Id
                     }
                 };
-                context.Groups.Add(group4);
                 context.SaveChanges();
 
 
@@ -181,6 +184,8 @@ namespace HSEInformer.Server.Models
                     Administrator = null,
                     GroupType = GroupType.AutoCreated,
                 };
+                context.Groups.Add(group5);
+                context.SaveChanges();
                 group5.UserGroups = new List<UserGroup>
                 {
                     new UserGroup
@@ -189,7 +194,7 @@ namespace HSEInformer.Server.Models
                         UserId = vika.Id
                     },
                 };
-                context.Groups.Add(group5);
+
                 context.SaveChanges();
 
                 var group6 = new Group
@@ -198,6 +203,8 @@ namespace HSEInformer.Server.Models
                     Administrator = tonya,
                     GroupType = GroupType.AutoCreated,
                 };
+                context.Groups.Add(group6);
+                context.SaveChanges();
                 group6.UserGroups = new List<UserGroup>
                 {
                     new UserGroup
@@ -206,7 +213,6 @@ namespace HSEInformer.Server.Models
                         UserId = tonya.Id
                     }
                 };
-                context.Groups.Add(group6);
                 context.SaveChanges();
 
 
@@ -223,10 +229,20 @@ namespace HSEInformer.Server.Models
                     {
                         Group = group1,
                         Theme = "Открытие регистрации",
-                        Time = DateTime.Now,
+                        Time = DateTime.Now - TimeSpan.FromMinutes(1000),
                         Content = "Всем привет! Администрация просила передать, что сегодня в 20:00 откроется регистрация на концерт группы СПЛИН.",
                         User = lena
+                    },
+                    new Post
+                    {
+                        Group = group2,
+                        Theme = "Сессия приближается",
+                        Time = DateTime.Now,
+                        Content = "Здравствуйте, дорогие студенты! Приближается сессия, всем желаю удачи. " +
+                        "Если вы заметили какую-то несправедлиовость, то можете обращаться ко мне или напрямую к студсовету.",
+                        User = vika
                     });
+
                 context.SaveChanges();
 
                 if (!context.PostPermissions.Any())

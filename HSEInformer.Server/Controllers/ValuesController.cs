@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using HSEInformer.Server.Models;
 using HSEInformer.Server.DTO;
 using Microsoft.EntityFrameworkCore;
+using HSEInformer.Server.ViewModels;
 
 namespace HSEInformer.Server.Controllers
 {
@@ -305,8 +306,8 @@ namespace HSEInformer.Server.Controllers
 
         [Authorize]
         [HttpGet]
-        [Route("getPostPermissions")]
-        public IActionResult GetPostPermissions([FromQuery]int id)
+        [Route("getGroupPostPermissions")]
+        public IActionResult GetGroupPostPermissions([FromQuery]int id)
         {
             //Получаем из токена username
             var username = User.Identity.Name;
@@ -356,8 +357,8 @@ namespace HSEInformer.Server.Controllers
 
         [Authorize]
         [HttpGet]
-        [Route("getPostPermissionRequests")]
-        public IActionResult GetPostPermissionRequests([FromQuery]int id)
+        [Route("getGroupPostPermissionRequests")]
+        public IActionResult GetGroupPostPermissionRequests([FromQuery]int id)
         {
             //Получаем из токена username
             var username = User.Identity.Name;
@@ -396,6 +397,113 @@ namespace HSEInformer.Server.Controllers
                              Patronymic = m.User.Patronymic
                          })
                 });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
+        [Authorize]
+        [HttpGet]
+        [Route("getUserPostPermissions")]
+        public IActionResult GetUserPostPermissions()
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+            if (user != null)
+            {
+                //Группы, в которые пользователь может писать
+                var groups = _context.PostPermissions
+                    .Include(p => p.User)
+                    .Include(p => p.Group)
+                    .Where(p => p.User.Id == user.Id)
+                    .Select(p => p.Group)
+                    .ToList();
+
+                
+                var groupsUserCanPost = groups.Select(g => new DTOGroup
+                {
+                    Id = g.Id,
+                    Name = g.Name,
+                    GroupType = (int)g.GroupType
+                }).ToList();
+
+                return Json(new
+                {
+                    Ok = true,
+                    Result = groupsUserCanPost
+                });
+
+
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
+
+        [Authorize]
+        [HttpPost]
+        [Route("sendMessage")]
+        public IActionResult ConfirmEmail([FromBody]PostViewModel model)
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+           
+
+            if (user != null)
+            {
+
+                int group_id = model.Group_id;
+                string theme = model.Theme;
+                string content = model.Content;
+
+
+                //Находится ли пользователь в данной группе
+                var group = _context.Groups
+                   .Include(g => g.UserGroups)
+                   .ThenInclude(ug => ug.User)
+                   .FirstOrDefault(g => g.Id == group_id);
+
+                //Имеет ли данный пользователь право публиковать запись
+                var postPermission = _context.PostPermissions
+                    .Include(p => p.User)
+                    .FirstOrDefault(p => p.Group.Id == group_id && p.User.Id == user.Id);
+
+                if (group!=null && postPermission != null)
+                {
+                    var post = new Post
+                    {
+                        Theme = theme,
+                        Content = content,
+                        User = user,
+                        Group = group,
+                        Time = DateTime.Now
+                    };
+                    _context.Posts.Add(post);
+                    _context.SaveChanges();
+
+                    return Ok();
+                }
+                return Unauthorized();
             }
             else
             {
