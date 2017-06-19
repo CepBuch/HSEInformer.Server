@@ -230,7 +230,7 @@ namespace HSEInformer.Server.Controllers
                     .OrderByDescending(p => p.Time)
                     .Take(50)
                     .ToArray();
- 
+
                 return Json(new
                 {
                     Ok = true,
@@ -378,7 +378,7 @@ namespace HSEInformer.Server.Controllers
                .ThenInclude(ug => ug.User)
                .FirstOrDefault(g => g.Id == id);
 
-            //Если пользователь -админ, то запросы на публикацию и люди, которые могут публиковать
+            //Если пользователь -админ, то запросы на публикацию
             if (user != null && group != null && group.Administrator != null && group.Administrator.Id == user.Id)
             {
                 var postPermissionRequests = _context.PostPermissionRequests
@@ -429,7 +429,7 @@ namespace HSEInformer.Server.Controllers
                     .Select(p => p.Group)
                     .ToList();
 
-                
+
                 var groupsUserCanPost = groups.Select(g => new DTOGroup
                 {
                     Id = g.Id,
@@ -456,7 +456,7 @@ namespace HSEInformer.Server.Controllers
         [Authorize]
         [HttpPost]
         [Route("sendMessage")]
-        public IActionResult ConfirmEmail([FromBody]PostViewModel model)
+        public IActionResult SendMessage([FromBody]PostViewModel model)
         {
             //Получаем из токена username
             var username = User.Identity.Name;
@@ -467,7 +467,7 @@ namespace HSEInformer.Server.Controllers
                    .ThenInclude(ug => ug.Group)
                    .FirstOrDefault(u => u.Username == username);
 
-           
+
 
             if (user != null)
             {
@@ -488,7 +488,7 @@ namespace HSEInformer.Server.Controllers
                     .Include(p => p.User)
                     .FirstOrDefault(p => p.Group.Id == group_id && p.User.Id == user.Id);
 
-                if (group!=null && postPermission != null)
+                if (group != null && postPermission != null)
                 {
                     var post = new Post
                     {
@@ -510,6 +510,103 @@ namespace HSEInformer.Server.Controllers
                 return Unauthorized();
             }
         }
+
+
+        [Authorize]
+        [HttpGet]
+        [Route("getGroupsWithoutPermission")]
+        public IActionResult GetAllGroups()
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(g => g.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+
+            if (user != null)
+            {
+                //Индексы групп, в которые пользователь может писать
+                var groupsWithPermission = _context.PostPermissions
+                    .Include(p => p.User)
+                    .Include(p => p.Group)
+                    .Where(p => p.User.Id == user.Id)
+                    .Select(p => p.Group.Id)
+                    .ToList();
+
+                //Возвращаем группы, в которых пользователь не имеет право писать
+                var groups = _context.Groups
+                    .Where(g => !groupsWithPermission.Contains(g.Id))
+                    .ToList();
+
+                return Json(new
+                {
+                    Ok = true,
+                    Result = groups
+                    .Select(g => new DTOGroup { Id = g.Id, Name = g.Name, GroupType = (int)g.GroupType })
+                });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
+        [Authorize]
+        [HttpPost]
+        [Route("sendPostPermissionRequest")]
+        public IActionResult sendPostPermissionRequest([FromBody]RequestViewModel model )
+        {
+            var id = model.Id;
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+            //Ищем данную группу
+            var group = _context.Groups
+               .Include(g => g.UserGroups)
+               .ThenInclude(ug => ug.User)
+               .FirstOrDefault(g => g.Id == id);
+
+            //Если и то и другое существует
+            if (user != null && group != null)
+            {
+                //Смотрим сть ли уже у пользователя запрос в эту группу
+                var request = _context.PostPermissionRequests
+                    .Include(ppr => ppr.User)
+                    .Include(ppr => ppr.Group)
+                    .FirstOrDefault(ppr => ppr.Group.Id == id && ppr.User.Id == user.Id);
+
+                //Если нет, то добавляем, если есть то игнорируем
+                if (request == null)
+                {
+                    var newRequest = new PostPermissionRequest
+                    {
+                        User = user,
+                        Group = group
+                    };
+                    _context.PostPermissionRequests.Add(newRequest);
+                    _context.SaveChanges();
+                }
+
+                return Ok();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
     }
 
 
