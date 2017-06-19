@@ -559,7 +559,7 @@ namespace HSEInformer.Server.Controllers
         [Authorize]
         [HttpPost]
         [Route("sendPostPermissionRequest")]
-        public IActionResult sendPostPermissionRequest([FromBody]RequestViewModel model )
+        public IActionResult sendPostPermissionRequest([FromBody]RequestViewModel model)
         {
             var id = model.Id;
             //Получаем из токена username
@@ -596,6 +596,77 @@ namespace HSEInformer.Server.Controllers
                     };
                     _context.PostPermissionRequests.Add(newRequest);
                     _context.SaveChanges();
+                }
+
+                return Ok();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("sendRequestAnswer")]
+        public IActionResult SendRequestAnswer([FromBody]RequestAnswerViewModel model)
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+            int group_id = model.GroupId;
+            var requesterUsername = model.UserName;
+
+            //Ищем администратора
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+            //Ищем пользователя, который сделал запрос
+            var requesterUser = _context.Users
+                  .Include(u => u.UserGroups)
+                  .ThenInclude(ug => ug.Group)
+                  .FirstOrDefault(u => u.Username == requesterUsername);
+
+            //Ищем данную группу
+            var group = _context.Groups
+               .Include(g => g.UserGroups)
+               .ThenInclude(ug => ug.User)
+               .FirstOrDefault(g => g.Id == group_id);
+
+            //Если все существует
+            if (user != null && requesterUser != null && group != null)
+            {
+
+                var request = _context.PostPermissionRequests
+                    .Include(ppr => ppr.User)
+                    .Include(ppr => ppr.Group)
+                    .FirstOrDefault(ppr => ppr.Group.Id == group_id && ppr.User.Username == requesterUsername);
+
+
+                //Если такой запрос существует, то принимаем либо отвергаем запрос
+                if (request != null)
+                {
+                    var accepted = model.Accepted;
+
+                    if (accepted)
+                    {
+                        var postPermission = new PostPermission
+                        {
+                            User = requesterUser,
+                            Group = group
+                        };
+                        _context.PostPermissions.Add(postPermission);
+                        _context.SaveChanges();
+                    }
+
+                    //Удаляем запрос
+                    _context.PostPermissionRequests.Remove(request);
+                    _context.SaveChanges();
+                }
+                else
+                {
+                    Unauthorized();
                 }
 
                 return Ok();
