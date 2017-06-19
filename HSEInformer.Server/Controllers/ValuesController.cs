@@ -704,6 +704,300 @@ namespace HSEInformer.Server.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet]
+        [Route("getGroupNames")]
+        public IActionResult GetGroupNames()
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(g => g.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+
+            if (user != null)
+            {
+                //Возвращаем именя всех групп
+                var groups = _context.Groups.Select(g => g.Name);
+                return Json(new
+                {
+                    Ok = true,
+                    Result = groups
+                });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("createGroup")]
+        public IActionResult CreateGroup([FromBody]CreateGroupViewModel model)
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+
+
+            if (user != null)
+            {
+                var groupName = model.Name;
+
+                var group = new Group
+                {
+                    Name = groupName,
+                    Administrator = user,
+                    GroupType = GroupType.Custom,
+                };
+
+                _context.Groups.Add(group);
+                _context.SaveChanges();
+
+                group.UserGroups = new List<UserGroup>
+                {
+                    new UserGroup
+                    {
+                        GroupId = group.Id,
+                        UserId = user.Id
+                    }
+                };
+                _context.SaveChanges();
+
+                _context.PostPermissions.Add(new PostPermission
+                {
+                    Group = group,
+                    User = user
+                });
+                _context.SaveChanges();
+                return Ok();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
+        [Authorize]
+        [HttpGet]
+        [Route("getUsersToInvite")]
+        public IActionResult GetUsersToInvite([FromQuery]int id)
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+
+            //Ищем группу
+            var group = _context.Groups
+               .Include(g => g.UserGroups)
+               .ThenInclude(ug => ug.User)
+               .FirstOrDefault(g => g.Id == id);
+
+            //Если и то и то существует
+            if (user != null && group != null )
+            {
+                //Имена участников группы
+                var usernames = group.UserGroups.Select(u => u.User.Username);
+
+                //Получаем пользователей, которые не входят в группу
+                var users = _context.Users
+                    .Where(u => !usernames.Contains(u.Username));
+
+                return Json(new
+                {
+                    Ok = true,
+                    Result = users.Select(u => new DTOUser
+                         {
+                             Username = u.Username,
+                             Name = u.Name,
+                             Surname = u.Surname,
+                             Patronymic = u.Patronymic
+                         })
+                });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
+
+        [Authorize]
+        [HttpPost]
+        [Route("sendInvite")]
+        public IActionResult SendInvite([FromBody]InviteViewModel model)
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+            int group_id = model.GroupId;
+
+            //Ищем данную группу
+            var group = _context.Groups
+               .Include(g => g.UserGroups)
+               .ThenInclude(ug => ug.User)
+               .FirstOrDefault(g => g.Id == group_id);
+
+            var requesterUsername = model.UserName;
+
+            //Ищем пользователя, который сделал запрос
+            var userToInvite = _context.Users
+                  .Include(u => u.UserGroups)
+                  .ThenInclude(ug => ug.Group)
+                  .FirstOrDefault(u => u.Username == requesterUsername);
+            //Если все существует
+            if (user != null && group != null && userToInvite != null)
+            {
+                //Смотрим сть ли уже у пользователя приглашение
+                var request = _context.Invites
+                    .Include(ppr => ppr.User)
+                    .Include(ppr => ppr.Group)
+                    .FirstOrDefault(ppr => ppr.Group.Id == group_id && ppr.User.Id == userToInvite.Id);
+
+                //Если нет, то приглашаем, если есть то игнорируем
+                if (request == null)
+                {
+                    var newInvite = new InviteToGroup
+                    {
+                        User = userToInvite,
+                        Group = group
+                    };
+                    _context.Invites.Add(newInvite);
+                    _context.SaveChanges();
+                }
+
+                return Ok();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("getUserInvites")]
+        public IActionResult GetUserInvites()
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(g => g.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+
+            if (user != null)
+            {
+                //Индексы групп, в которые пользователь может писать
+                var invites = _context.Invites
+                    .Include(i => i.Group)
+                    .Include(i => i.User)
+                    .Where(i => i.User.Id == user.Id).ToList();
+                var groups = invites.Select(i => i.Group);
+
+                return Json(new
+                {
+                    Ok = true,
+                    Result = groups
+                    .Select(g => new DTOGroup { Id = g.Id, Name = g.Name, GroupType = (int)g.GroupType })
+                });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("sendInviteAnswer")]
+        public IActionResult SendInviteAnswer([FromBody]InviteResponseViewModel model)
+        {
+            //Получаем из токена username
+            var username = User.Identity.Name;
+            int group_id = model.GroupId;
+
+            //Ищем администратора
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+            //Ищем данную группу
+            var group = _context.Groups
+               .Include(g => g.UserGroups)
+               .ThenInclude(ug => ug.User)
+               .FirstOrDefault(g => g.Id == group_id);
+
+            //Если все существует
+            if (user != null && group != null)
+            {
+
+                var request = _context.Invites
+                    .Include(ppr => ppr.User)
+                    .Include(ppr => ppr.Group)
+                    .FirstOrDefault(ppr => ppr.Group.Id == group_id && ppr.User.Username == user.Username);
+
+
+                //Если такой запрос существует, то принимаем либо отвергаем запрос
+                if (request != null)
+                {
+                    var accepted = model.Accepted;
+
+                    if (accepted)
+                    {
+                        group.UserGroups.Add(new UserGroup
+                        {
+                            User = user,
+                            Group = group
+                        });
+                        _context.SaveChanges();
+                    }
+
+                    //Удаляем запрос
+                    _context.Invites.Remove(request);
+                    _context.SaveChanges();
+                }
+                else
+                {
+                    Unauthorized();
+                }
+
+                return Ok();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
 
     }
 
