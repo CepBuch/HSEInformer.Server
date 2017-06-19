@@ -24,7 +24,34 @@ namespace HSEInformer.Server.Controllers
         [Route("getProfile")]
         public IActionResult GetLogin()
         {
-            return Ok($"Ваш логин: {User.Identity.Name}");
+            //Получаем из токена username
+            var username = User.Identity.Name;
+
+            //Ищем данного пользователя
+            var user = _context.Users
+                   .Include(u => u.UserGroups)
+                   .ThenInclude(ug => ug.Group)
+                   .FirstOrDefault(u => u.Username == username);
+
+            if (user != null)
+            {
+
+                return Json(new
+                {
+                    Ok = true,
+                    Result = new DTOUser
+                    {
+                        Name = user.Name,
+                        Surname = user.Surname,
+                        Patronymic = user.Patronymic,
+                        Username = user.Username
+                    }
+                });
+            }
+            else
+            {
+                return Unauthorized();
+            }
         }
 
 
